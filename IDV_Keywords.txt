@@ -1,0 +1,1194 @@
+*** Settings ***
+Library           SeleniumLibrary
+Library           Collections
+Library           String
+
+*** Variables ***
+${modality_number}    3    # Any integer between 1 to 4
+
+*** Keywords ***
+Change the number of API Keys displayed
+    [Arguments]    ${list_row_number}    # 5, 10, 25, 50
+    Click Element    //*[@id="pagination-rows"]    #Number of API Keys Display Dropdown
+    Capture Page Screenshot    API Keys Display Count.png
+    Run Keyword If    "${list_row_number}" == "5"    Set Global Variable    ${list_row_index}    1
+    Run Keyword If    "${list_row_number}" == "10"    Set Global Variable    ${list_row_index}    2
+    Run Keyword If    "${list_row_number}" == "25"    Set Global Variable    ${list_row_index}    3
+    Run Keyword If    "${list_row_number}" == "50"    Set Global Variable    ${list_row_index}    4
+    Comment    Mouse Down    //*[@id="pagination-menu-list"]/li[${list_row_index}]    #Number of API Keys Option = 100
+    Comment    Mouse Up    //*[@id="pagination-menu-list"]/li[${list_row_index}]
+    Click Element    //*[@id="pagination-menu-list"]/li[${list_row_index}]
+    Capture Page Screenshot    API Keys List page.png
+    Set Test Variable    ${list_row_number}
+
+Click Add API Key button
+    Click Element    //*[@id="root"]/div/div[2]/div[2]/div/div/div[1]/div[2]/button    #New API Key button on RHS
+
+Click Approve button
+    Sleep    1s    Wait for Approve button to be properly rendered.
+    Click Button    Approve
+
+Click Copy API Key button on API Keys List page
+    Wait Until Page Contains Element    //*[@id="MUIDataTableBodyRow-0"]/td[9]/div/div/button[1]    5s    #Copy button
+    Click Element    //*[@id="MUIDataTableBodyRow-0"]/td[9]/div/div/button[1]    #Copy button
+
+Click Deploy button
+    Sleep    2s    Wait for Deploy button to be properly rendered.
+    Click Button    Deploy
+
+Click Edit API Key button on API List page
+    ${status}    Run Keyword And Return Status    Location Should Contain    list
+    Pass Execution If    "${status}" == "True"    USER IS ON THE DIGITAL IDENTITY APIs PAGE AND THUS NO EDIT BUTTON AVAILABLE ON THIS PAGE.
+    Run Keyword If    "${status}" == "False"    Run Keywords    Wait Until Page Contains Element    //*[@id="MUIDataTableBodyRow-0"]/td[9]/div/div/button    5s
+    ...    AND    Click Button    edit    #Edit button
+
+Click I Agree button
+    Click Element    //*[@id="terms__button-agree"]
+
+Click My Bank icon
+    Click Element    css=#c-fi-selector-item__logo-MyBank    #My Bank image
+
+Click Next button
+    Sleep    2s    Wait for Next button to be properly rendered.
+    Click Button    Next
+
+Click OK button
+    ${status}    Run Keyword And Return Status    Click Element    //*[@id="submit_code"]    #OK button
+    Run Keyword If    '${status}' == 'False'    Click Element    css=#consent_ok
+
+Click Reset Filter button
+    Click Element    //*[contains(@aria-label,"Filter Table")]    #Filter Table button
+    Click Element    //*[contains(@aria-label,"RESET")]    #Reset button
+    Click Element    //*[contains(@aria-label,"Close")]    #X button
+
+Click Save button
+    Click Element    css=#root > div > div.Dashboard__AppContent-sc-1u3pfyg-2.eegndd > div > div > div > div.api-key-form > form > div > div.col-xl-4.col-lg-5.col-md-6.col-sm-12.col-12 > div.button-group > button.btn.btn-primary    #Save Button
+
+Click Sign In button
+    Click Element    //*[@id="login"]    #Sign In button
+
+Click Sign Up with Verified.Me button
+    Click Element    //*[@id="root"]/div/div[3]/div/div/div/form/button    #Sign Up with Verified.Me button
+
+Click View API Key button on API Keys List page
+    Wait Until Page Contains Element    //*[@id="MUIDataTableBodyRow-0"]/td[2]    5s    #1st API on the list
+    Click Button    visibility    #View button
+    Mouse Down    //*[@id="MUIDataTableBodyRow-0"]/td[9]/div/div/button[2]    #View button
+    Capture Page Screenshot    APIs List with View button pressed.png
+
+Click Yes button
+    Sleep    0.5s    Waiting for the Yes button to properly render.
+    Click Element    //*[@id="ringtone-menu"]/div[3]/div/div[3]/button[2]/span[1]
+
+Compare API Key pagination between current and next pages
+    ${APIKeys_pagecount}    Get Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[3]/div/div/table/tfoot/tr/td/div/div/div/p[2]    #Page Count
+    ${APIKeys_pagecount}    Fetch From Left    ${APIKeys_pagecount}    o
+    ${APIKeys_pagecount}    Set Variable    ${APIKeys_pagecount.strip()}
+    Click Element    //*[@id="pagination-next"]    #Next Page button (>)
+    ${APIKeys_newpagecount}    Get Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[3]/div/div/table/tfoot/tr/td/div/div/div/p[2]    #Page Count
+    ${APIKeys_newpagecount}    Fetch From Left    ${APIKeys_newpagecount}    o
+    ${APIKeys_newpagecount}    Set Variable    ${APIKeys_newpagecount.strip()}
+    Should Not Be Equal As Strings    ${APIKeys_pagecount}    ${APIKeys_newpagecount}
+
+Compare API Key pagination between current and previous pages
+    Click Element    //*[@id="pagination-next"]    #Next Page button (>)
+    ${APIKeys_pagecount}    Get Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[3]/div/div/table/tfoot/tr/td/div/div/div/p[2]    #Page Count
+    ${APIKeys_pagecount}    Fetch From Left    ${APIKeys_pagecount}    o
+    ${APIKeys_pagecount}    Set Variable    ${APIKeys_pagecount.strip()}
+    Click Element    //*[@id="pagination-back"]    #Previous Page button (<)
+    ${APIKeys_newpagecount}    Get Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[3]/div/div/table/tfoot/tr/td/div/div/div/p[2]    #Page Count
+    ${APIKeys_newpagecount}    Fetch From Left    ${APIKeys_newpagecount}    o
+    ${APIKeys_newpagecount}    Set Variable    ${APIKeys_newpagecount.strip()}
+    Should Not Be Equal As Strings    ${APIKeys_pagecount}    ${APIKeys_newpagecount}
+
+Compare Unmasked API Key with the Pasted API Key
+    ${CopiedAPIKey}    Get Value    //*[contains(@name,"apiName")]
+    ${status}    Run Keyword And Return Status    Should Not Be Empty    ${keyname}
+    log    ${status}
+    ${status}    Run Keyword And Return Status    Should Be Equal As Strings    ${APIKey}    ${CopiedAPIKey}
+    Run Keyword If    "${status}" == "True"    Log    COPY FUNCTION WORKS AS EXPECTED.
+    Run Keyword If    "${status}" == "False"    Log    KEY SHOWN ON APIs LIST IS A DUMMY KEY.
+
+Compare a count of existing API Keys
+    Get API Keys Count
+    @{list_API}    Create List
+    FOR    ${i}    IN RANGE    0    ${APIKeys_count}
+        Wait Until Page Contains Element    //*[contains(@data-testid,"MuiDataTableBodyCell-0-${i}")]
+        ${APIKey_name}    Get Text    //*[contains(@data-testid,"MuiDataTableBodyCell-0-${i}")]
+        Run Keyword If    "${APIKey_name}" != "${EMPTY}"    Append To List    ${list_API}    ${APIKey_name}
+    END
+    ${list_API_length}    Get Length    ${list_API}
+    Should Be Equal As Integers    ${list_API_length}    ${APIKeys_count}
+    Set Test Variable    ${list_API}
+    Set Test Variable    ${list_API_length}
+
+Compare a count of existing API Keys List with the Next Page
+    Comment    ${APIKeys_count}    Get Text    //*[@id="root"]/div/div/div[2]/div/div/div[2]/div/div/table/tfoot/tr/td/div/div/div/p[2]
+    Comment    ${APIKeys_count}    Fetch From Right    ${APIKeys_count}    -
+    Comment    ${APIKeys_count}    Fetch From Left    ${APIKeys_count}    o
+    Comment    ${APIKeys_count}    Set Variable    ${APIKeys_count.strip()}
+    Comment    log    ${APIKeys_count}
+    @{list_API_sort}    Create List
+    FOR    ${i}    IN RANGE    0    ${list_row_number}
+        ${APIKey_name}    Get Text    //*[contains(@data-testid,"MuiDataTableBodyCell-0-${i}")]
+        Run Keyword If    "${APIKey_name}" != "${EMPTY}"    Append To List    ${list_API_sort}    ${APIKey_name}
+    END
+    ${list_API_length_sort}    Get Length    ${list_API_sort}
+    Should Be Equal As Integers    ${list_API_length_sort}    ${list_row_number}
+    Set Test Variable    ${list_API_sort}
+    Set Test Variable    ${list_API_length_sort}
+
+Compare a count of existing API Keys with Filter Option
+    ${APIKeys_count}    Get Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[3]/div/div/table/tfoot/tr/td/div/div/div/p[2]
+    ${APIKeys_count}    Fetch From Right    ${APIKeys_count}    f
+    ${APIKeys_count}    Set Variable    ${APIKeys_count.strip()}
+    log    ${APIKeys_count}
+    @{list_API}    Create List
+    FOR    ${i}    IN    @{list_API_filter_rownumbers}
+        ${APIKey_name}    Get Text    //*[contains(@data-testid,"MuiDataTableBodyCell-0-${i}")]
+        Run Keyword If    "${APIKey_name}" != "${EMPTY}"    Append To List    ${list_API}    ${APIKey_name}
+    END
+    ${list_API_length}    Get Length    ${list_API}
+    Should Not Be Equal As Integers    ${list_API_length}    ${APIKeys_count}
+    Set Test Variable    ${list_API_length}
+    Set Test Variable    ${list_API}
+
+Delete selected API Keys
+    ${oldAPIKeys_count}    Evaluate    ${APIKeys_count} - 1
+    Click Element    //*[@id="MUIDataTableSelectCell-${oldAPIKeys_count}"]    #Checkbox to delete the API Key
+    Capture Page Screenshot    Delete Selection - API Key List page.png
+    Click Button    delete    #Delete button
+    Wait Until Page Contains Element    //*[@id="MUIDataTableBodyRow-0"]/td[2]
+    Sleep    2
+    Change the number of API Keys displayed    50
+    Get API Keys Count
+    Should Be Equal as Integers    ${oldAPIKeys_count}    ${APIKeys_count}
+
+Deleted multilple selected API Keys
+    ${oldAPIKeys_count}    Evaluate    ${APIKeys_count}
+    Click Element    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[3]/table/thead/tr/th[1]/div/span/span[1]/input    #Checkbox to delete mutiple API Keys
+    Capture Page Screenshot    Multiple Delete Selection - API Key List page.png
+    Click Element    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[1]/button    #Delete button
+
+Fill Up the My Bank Login form
+    Input Text    //*[@id="userid"]    test101@prodigylabs.net
+    Input Password    //*[@id="password"]    password
+    Click Element    css=#login-form > div.vme-form__footer > div > label
+    Click Sign In button
+    Capture Page Screenshot    Filled My Bank Login page.png
+
+Filter the API Keys List based upon API Name filter on Digital Identity APIs page
+    Navigate to Create a New API flow from API List pages
+    Input API Name textbox    TEST API
+    Press Keys    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[2]/div/div[2]/div/div/input    COMMAND+a    #Select All from the API Name textbox
+    Press Keys    None    CTRL+INSERT    #Copy from the API Name textbox
+    Go Back
+    Sleep    1s
+    Click Element    //*[contains(@title,"Filter Table")]    #Filter Table button
+    Repeat Keyword    3 times    Press Keys    None    TAB
+    Press Keys    None    SHIFT+INSERT
+    Capture Page Screenshot    Digital Identity APIs page - Filter table.png
+    Click Element    //*[contains(@aria-label,"Close")]    #X button
+
+Filter the API Keys List based upon API Name filter on In Progress APIs page
+    Navigate to Create a New API flow from API List pages
+    Input API Name textbox    TEST API
+    Press Keys    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[2]/div/div[2]/div/div/input    COMMAND+a    #Select All from the API Name textbox
+    Press Keys    None    CTRL+INSERT    #Copy from the API Name textbox
+    Go Back
+    Sleep    1s
+    Click Element    //*[contains(@title,"Filter Table")]    #Filter Table button
+    Repeat Keyword    3 times    Press Keys    None    TAB
+    Press Keys    None    SHIFT+INSERT    #Paste to the API Name textbox
+    Capture Page Screenshot    In Progress APIs page - Filter table.png
+    Click Element    //*[contains(@aria-label,"Close")]    #X button
+
+Filter the API Keys List based upon Cost Center filter on Digital Identity APIs page
+    Click Element    //*[contains(@title,"Filter Table")]    #Filter Table button
+    Repeat Keyword    4 times    Press Keys    None    TAB
+    Repeat Keyword    2 times    Press Keys    None    ARROW_DOWN
+    Press Keys    None    RETURN
+    Capture Page Screenshot    Digital Identity APIs page - Filter table.png
+    Click Element    //*[contains(@aria-label,"Close")]    #X button
+
+Filter the API Keys List based upon Cost Center filter on In Progress APIs page
+    Click Element    //*[contains(@title,"Filter Table")]    #Filter Table button
+    Repeat Keyword    4 times    Press Keys    None    TAB
+    Repeat Keyword    2 times    Press Keys    None    ARROW_DOWN
+    Press Keys    None    RETURN
+    Capture Page Screenshot    In Progress APIs page - Filter table.png
+    Click Element    //*[contains(@aria-label,"Close")]    #X button
+
+Filter the API Keys List based upon Project filter on Digital Identity APIs page
+    Click Element    //*[contains(@title,"Filter Table")]    #Filter Table button
+    Repeat Keyword    5 times    Press Keys    None    TAB
+    Repeat Keyword    2 times    Press Keys    None    ARROW_DOWN
+    Press Keys    None    RETURN
+    Capture Page Screenshot    Digital Identity APIs page - Filter table.png
+    Click Element    //*[contains(@aria-label,"Close")]    #X button
+
+Filter the API Keys List based upon Project filter on In Progress APIs page
+    Click Element    //*[contains(@title,"Filter Table")]    #Filter Table button
+    Repeat Keyword    5 times    Press Keys    None    TAB
+    Repeat Keyword    2 times    Press Keys    None    ARROW_DOWN
+    Press Keys    None    RETURN
+    Capture Page Screenshot    In Progress APIs page - Filter table.png
+    Click Element    //*[contains(@aria-label,"Close")]    #X button
+
+Filter the API Keys List based upon Status filter on Digital Identity APIs page
+    Click Element    //*[contains(@title,"Filter Table")]    #Filter Table button
+    Repeat Keyword    7 times    Press Keys    None    TAB
+    Repeat Keyword    5 times    Press Keys    None    ARROW_DOWN
+    Press Keys    None    RETURN
+    Capture Page Screenshot    Digital Identity APIs page - Filter table.png
+    Click Element    //*[contains(@aria-label,"Close")]    #X button
+
+Filter the API Keys List based upon Status filter on In Progress APIs page
+    Click Element    //*[contains(@title,"Filter Table")]    #Filter Table button
+    Repeat Keyword    7 times    Press Keys    None    TAB
+    Repeat Keyword    2 times    Press Keys    None    ARROW_DOWN
+    Press Keys    None    RETURN
+    Capture Page Screenshot    In Progress APIs page - Filter table.png
+    Click Element    //*[contains(@aria-label,"Close")]    #X button
+
+Get API Key value from API Keys List
+    ${APIKey}    Get Text    //*[@id="MUIDataTableBodyRow-0"]/td[8]    #API Key field
+    Set Test Variable    ${APIKey}
+
+Get API Keys Count
+    ${APIKeys_count}    Get Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[3]/div/div/table/tfoot/tr/td/div/div/div/p[2]
+    ${APIKeys_count}    Fetch From Right    ${APIKeys_count}    -
+    ${APIKeys_count}    Fetch From Left    ${APIKeys_count}    o
+    ${APIKeys_count}    Set Variable    ${APIKeys_count.strip()}
+    log    ${APIKeys_count}
+    Set Test Variable    ${APIKeys_count}
+
+Get a count of existing API Keys with Filter Option
+    [Arguments]    ${filter_keyword}
+    Sleep    2
+    #****    redundant steps start here    ****
+    ${APIKeys_count}    Get Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[3]/div/div/table/tfoot/tr/td/div/div/div/p[2]
+    ${APIKeys_count}    Fetch From Left    ${APIKeys_count}    o
+    ${APIKeys_count}    Fetch From Right    ${APIKeys_count}    -
+    ${APIKeys_count}    Set Variable    ${APIKeys_count.strip()}
+    ${APIKeys_count}    Evaluate    ${APIKeys_count} - 1
+    log    ${APIKeys_count}
+    #****    redundant steps end here    ****
+    @{list_API_filter}    Create List
+    @{list_API_filter_rownumbers}    Create List
+    FOR    ${i}    IN RANGE    0    ${APIKeys_count}
+        ${APIKey_name}    Get Text    //*[@id="MUIDataTableBodyRow-${i}"]/td[2]
+        Comment    ${APIKey_name_contains}    Run Keyword And Return Status    Should Contain    ${APIKey_name}    ${filter_keyword}
+        Run Keyword If    "${APIKey_name}" != "${EMPTY}"    Append To List    ${list_API_filter}    ${APIKey_name}
+        Run Keyword If    "${APIKey_name}" != "${EMPTY}"    Append To List    ${list_API_filter_rownumbers}    ${i}
+    END
+    ${list_API_length_filter}    Get Length    ${list_API_filter}
+    Set Test Variable    ${list_API_length_filter}
+    Set Test Variable    ${list_API_filter}
+    Set Test Variable    ${list_API_filter_rownumbers}
+
+Input API Name textbox
+    [Arguments]    ${expected_API_name}=${EMPTY}
+    Sleep    1s
+    ${random_number}    Generate Random String    5    [NUMBERS]
+    Run Keyword If    "${expected_API_name}" != "${EMPTY}"    Input Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[2]/div/div[2]/div/div/input    ${expected_API_name}
+    Run Keyword Unless    "${expected_API_name}" != "${EMPTY}"    Input Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[2]/div/div[2]/div/div/input    Test API ${random_number}    #API Name textbox
+    Set Test Variable    ${random_number}
+
+Input Common Use Cases Selection - No Selection
+    #Common Use Cases selection steps to be added
+    Set Test Variable    ${commonusecases_checkbox_status}    ${EMPTY}
+    Capture Page Screenshot    Common Use Cases Selection.png
+    Click Next button
+
+Input Common Use Cases Selection - Selection Made - Create your own use case
+    Wait Until Page Contains Element    //*[contains(@name,"14632127-7663-4f5e-9408-aa9a78413367")]    #Common Use Cases selection
+    Click Element    //*[contains(@name,"14632127-7663-4f5e-9408-aa9a78413367")]    #Common Use Cases selection
+    ${commonusecases_checkbox_status}    Run Keyword And Return Status    Radio Button Should Be Set To    14632127-7663-4f5e-9408-aa9a78413367    //*[contains(@name,"14632127-7663-4f5e-9408-aa9a78413367")]
+    Set Test Variable    ${commonusecases_checkbox_status}
+    Capture Page Screenshot    Common Use Cases Selection.png
+    Click Next button
+
+Input Common Use Cases Selection - Selection Made - Retail Customer Onboarding
+    Wait Until Page Contains Element    //*[contains(@name,"d991a94b-5454-485c-9bdf-06400e8e5d1d")]    #Common Use Cases selection
+    Click Element    //*[contains(@name,"d991a94b-5454-485c-9bdf-06400e8e5d1d")]    #Common Use Cases selection
+    ${commonusecases_checkbox_status}    Run Keyword And Return Status    Radio Button Should Be Set To    d991a94b-5454-485c-9bdf-06400e8e5d1d    //*[contains(@name,"d991a94b-5454-485c-9bdf-06400e8e5d1d")]
+    Set Test Variable    ${commonusecases_checkbox_status}
+    Capture Page Screenshot    Common Use Cases Selection.png
+    Click Next button
+
+Input Consent Capture Method Selection
+    Wait Until Page Contains Element    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[1]/div/img    #Consent Capture page logo
+    FOR    ${i}    IN RANGE    1    50
+        ${status}    Run Keyword And Return Status    Click Element    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[3]/div[1]/label[${i}]/span[1]/span[1]/input    #Checkboxes
+        Continue For Loop If    "${status}" == "True"
+        Exit For Loop If    "${status}" == "False"
+    END
+    Capture Page Screenshot    Consent Capture Method Selection.png
+    Comment    ${consentcapturemethod_icon_value}    Get Text    //*[@id="root"]/div/div/div[2]/div/div/div[3]/div/div[1]/div/div/div[6]/button/span[1]/span[2]/span/small/button/span[1]/span
+    Comment    Run Keyword If    "${consentcapturemethod_icon_value}" == "description"    Log    CONSENT CAPTURE METHOD ICON IS ${consentcapturemethod_icon_value}.
+    Comment    Run Keyword If    "${consentcapturemethod_icon_value}" != "description"    Fail    CONSENT CAPTURE METHOD ICON IS ${consentcapturemethod_icon_value}.
+    Click Next button
+    Comment    ${consentcapturemethod_icon_value}    Get Text    //*[@id="root"]/div/div/div[2]/div/div/div[3]/div/div[1]/div/div/div[6]/button/span[1]/span[2]/span/small/button/span[1]/span
+    Comment    Run Keyword If    "${consentcapturemethod_icon_value}" == "check_circle"    Log    CONSENT CAPTURE METHOD ICON IS ${consentcapturemethod_icon_value}.
+    Comment    Run Keyword If    "${consentcapturemethod_icon_value}" != "check_circle"    Fail    CONSENT CAPTURE METHOD ICON IS ${consentcapturemethod_icon_value}.
+
+Input Geography Selection dropdown
+    [Arguments]    ${user_geography_selection}    #Canada #USA #Australia #India #UK
+    Set Test Variable    ${user_geography_selection}
+    Wait Until Page Contains Element    //*[@id="mui-component-select-Geography"]    #Geography dropdown menu
+    Click Element    //*[@id="mui-component-select-Geography"]    #Geography dropdown menu
+    Sleep    0.5s
+    Run Keyword If    "${user_geography_selection}" == "Canada"    Click Element    //*[@id="menu-Geography"]/div[3]/ul/li[4]    #Selecting Country = Canada    //*[contains(@data-value,"7d82d23f-6d7d-4bec-b3fd-b93be18bd6d3")]
+    Run Keyword If    "${user_geography_selection}" == "USA"    Click Element    //*[@id="menu-Geography"]/div[3]/ul/li[3]    #Selecting Country = United States of America
+    Run Keyword If    "${user_geography_selection}" == "Australia"    Click Element    //*[@id="menu-Geography"]/div[3]/ul/li[2]    #Selecting Country = Australia
+    Run Keyword If    "${user_geography_selection}" == "India"    Click Element    //*[@id="menu-Geography"]/div[3]/ul/li[1]    #Selecting Country = India
+    Run Keyword If    "${user_geography_selection}" == "UK"    Click Element    //*[@id="menu-Geography"]/div[3]/ul/li[5]    #Selecting Country = United Kingdom
+    Capture Page Screenshot    Geography Selection.png
+    Comment    ${geography_icon_value}    Get Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[3]/div/div[1]/div/div/div[2]/button/span[1]/span[2]/span/small/button/span[1]/span
+    Comment    Run Keyword If    "${geography_icon_value}" == "description"    Log    GEOGRAPHY ICON IS ${geography_icon_value}.
+    Comment    Run Keyword If    "${geography_icon_value}" != "description"    Fail    GEOGRAPHY ICON IS ${geography_icon_value}.
+    Click Next button
+    Comment    ${geography_icon_value}    Get Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[3]/div/div[1]/div/div/div[2]/button/span[1]/span[2]/span/small/button/span[1]/span
+    Comment    Run Keyword If    "${geography_icon_value}" == "check_circle"    Log    GEOGRAPHY ICON IS ${geography_icon_value}.
+    Comment    Run Keyword If    "${geography_icon_value}" != "check_circle"    Fail    GEOGRAPHY ICON IS ${geography_icon_value}.
+
+Input Identity Related Data Capture Selection checkbox
+    Capture Page Screenshot    Identity Related Data Capture Selection.png
+    Wait Until Page Contains Element    //*[contains(@name,"4ee87b69-2b63-4a70-80ef-8690268da2a9")]
+    #AML - Identity Solution
+    Click Element    //*[contains(@name,"4ee87b69-2b63-4a70-80ef-8690268da2a9")]    #AML tile
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@value,"ababc745-48e9-47e8-88a8-d8de3686db2c")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@value,"ababc745-48e9-47e8-88a8-d8de3686db2c")]    #Compliance Check - Validation Activity
+    Capture Page Screenshot    AML selection.png
+    #Biometrics - Identity Solution
+    Click Element    //*[contains(@name,"83d4f60e-0cac-4ca2-8702-196b0dcce475")]    #Biometrics tile
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@value,"d0880a83-a202-4bf1-8f81-121254475078")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@value,"d0880a83-a202-4bf1-8f81-121254475078")]    #Biometric Enrolment - Validation Activity
+    Capture Page Screenshot    Biometrics selection.png
+    #Fraud Verification - Identity Solution
+    Click Element    //*[contains(@name,"1ba43569-fc60-4d81-86c6-d5658c0e231f")]    #Fraud Verification tile
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@value,"21db592b-ec06-43cf-88d8-cba30e31970c")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@value,"21db592b-ec06-43cf-88d8-cba30e31970c")]    #Passive Fraud Check - Validation Activity
+    Capture Page Screenshot    Fraud Verification selection.png
+    Comment    #Financial Data Aggregation - Identity Solution
+    Comment    Click Element    //*[contains(@name,"ef182f4b-228c-48dc-b991-12ffbdb6de0a")]    #Financial Data Aggregation tile
+    Comment    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@value,"75d7ec0b-e793-4bf3-8ca6-b5a528646567")]
+    Comment    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@value,"75d7ec0b-e793-4bf3-8ca6-b5a528646567")]    #Risk Profile - Validation Activity
+    Comment    Capture Page Screenshot    Financial Data Aggregation selection.png
+    Comment    #Fraud Prevention - Identity Solution
+    Comment    Click Element    //*[contains(@name,"1ba43569-fc60-4d81-86c6-d5658c0e231f")]    #Fraud Prevention tile
+    Comment    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@value,"21db592b-ec06-43cf-88d8-cba30e31970c")]
+    Comment    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@value,"21db592b-ec06-43cf-88d8-cba30e31970c")]    #Fraud Check - Validation Activity
+    Comment    Capture Page Screenshot    Fraud Prevention selection.png
+    #KYB - Identity Solution
+    Click Element    //*[contains(@name,"c0ac0c2b-282f-4b75-878c-2e2e029692ec")]    #KYB tile
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@value,"749660ee-609a-4827-a514-731c031b8263")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@value,"749660ee-609a-4827-a514-731c031b8263")]    #Business Identity Check - Validation Activity
+    Capture Page Screenshot    KYB selection.png
+    #KYC - Identity Solution
+    Click Element    //*[contains(@name,"bad73081-2b6f-4804-9d74-618f33743607")]    #KYC tile
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@value,"b47472be-cfec-4cdd-ad5c-86907185bb8c")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@value,"b47472be-cfec-4cdd-ad5c-86907185bb8c")]    #Identity Check - Validation Activity
+    Capture Page Screenshot    KYC selection.png
+    #Risk Assessment - Identity Solution
+    Click Element    //*[contains(@name,"13d94d88-5417-4a8d-97f8-20a9227a8599")]    #Risk Assessment tile
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@value,"75d7ec0b-e793-4bf3-8ca6-b5a528646567")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@value,"75d7ec0b-e793-4bf3-8ca6-b5a528646567")]    #Risk Profile - Validation Activity
+    Capture Page Screenshot    Risk Assessment selection.png
+    Click Next button
+    Comment    ${identityvrelateddatacapture_icon_value}    Get Text    //*[@id="root"]/div/div/div[2]/div/div/div[3]/div/div[1]/div/div/div[5]/button/span[1]/span[2]/span/small/button/span[1]/span
+    Comment    Run Keyword If    "${identityvrelateddatacapture_icon_value}" == "check_circle"    Log    IDENTITY RELATED DATA CAPTURE ICON IS ${identityvrelateddatacapture_icon_value}.
+    Comment    Run Keyword If    "${identityvrelateddatacapture_icon_value}" != "check_circle"    Fail    IDENTITY RELATED DATA CAPTURE ICON IS ${identityvrelateddatacapture_icon_value}.
+
+Input Identity Validation Method Selection checkbox
+    Comment    Sleep    1s
+    Wait Until Page Contains Element    //*[contains(@name,"Document ID Verification")]
+    Capture Page Screenshot    Identity Validation Method Selection.png
+    @{non-clickable_Val_Methods_tiles}    Create List
+    #Document ID Verification - Validation Methods
+    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Document ID Verification")]    #Document ID Verification tile
+    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Document ID Verification")]
+    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@name,"Passport")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@name,"Passport")]    #Passport - Validation IDs
+    Comment    Wait Until Page Contains Element    //*[contains(@value,"fca972ed-d16d-43d0-8746-49b42912f2f9")]    #BirthDate - Passport Data - Attribute checkbox
+    ${status}    Run Keyword And Return Status    Checkbox Should Be Selected    //*[contains(@name,"Passport")]
+    Run Keyword If    "${status}" == "True"    Capture Page Screenshot    ID Verification selection.png
+    Comment    Capture Page Screenshot    ID Verification selection.png
+    Sleep    0.5s
+    #Age Verification - Validation Methods
+    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Age Verification")]    #Age Verification tile
+    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Age Verification")]
+    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@name,"Drivers License - All provinces & territories")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@name,"Drivers License - All provinces & territories")]    #DL - Validation IDs
+    Capture Page Screenshot    Age Verification selection.png
+    Sleep    0.5s
+    #Address Verification - Validation Methods
+    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Address Verification")]    #Address Verification tile
+    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Address Verification")]
+    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@name,"Utility Bill")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@name,"Utility Bill")]    #Utility Bill - Validation IDs
+    Capture Page Screenshot    Address Verification selection.png
+    Sleep    0.5s
+    #Biometric Setup (Enrolment) - Validation Methods
+    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Biometric Setup (Enrolment)")]    #Biometric Setup (Enrolment) Setup tile
+    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Biometric Setup (Enrolment)")]
+    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@name,"Fingerprint enrolment")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@name,"Fingerprint enrolment")]    #Fingerprint Enrolment - Validation IDs
+    Capture Page Screenshot    Biometric Step-Up selection.png
+    Sleep    0.5s
+    Comment    #Criminal Records Check - Validation Methods
+    Comment    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Criminal Records Check")]    #Criminal Records Check tile
+    Comment    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Criminal Records Check")]
+    Comment    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    Comment    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@name,"Canadian Profile data")]
+    Comment    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@name,"Canadian Profile data")]    #Canadian Profile data - Validation IDs
+    Comment    Capture Page Screenshot    Sanctions and Screen Validation selection.png
+    Comment    Sleep    0.5s
+    #Digital ID Verification - Validation Methods
+    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Digital ID Verification")]    #Digital ID Verification tile
+    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Digital ID Verification")]
+    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@name,"Bank Account Profile (Verified.Me)")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@name,"Bank Account Profile (Verified.Me)")]    #Bank Account Profile (Verified.Me) - Validation IDs
+    Capture Page Screenshot    Bank Account Profile (Verified.Me) selection.png
+    Sleep    0.5s
+    #Credit Bureau - Risk Assessment - Validation Methods
+    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Credit Bureau - Risk Assessment")]    #Credit Bureau - Risk Assessment tile
+    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Credit Bureau - Risk Assessment")]
+    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@name,"Business Failure Risk Score")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@name,"Business Failure Risk Score")]    #Business Failure Risk Score - Validation IDs
+    Capture Page Screenshot    Email Verification selection.png
+    Sleep    0.5s
+    #Entity Verification - Validation Methods
+    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Entity Verification")]    #Entity Verification tile
+    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Entity Verification")]
+    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@name,"Certificate of Incorporation")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@name,"Certificate of Incorporation")]    #Certificate of Incorporation - Validation IDs
+    Capture Page Screenshot    Entity Verification selection.png
+    Sleep    0.5s
+    #Negative media - Validation Methods
+    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Negative media")]    #Negative media tile
+    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Negative media")]
+    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@value,"b1bd04a5-a159-4040-bd3e-6d438d7cedd8")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@value,"b1bd04a5-a159-4040-bd3e-6d438d7cedd8")]    #Human trafficking - Validation IDs
+    Capture Page Screenshot    Negative media selection.png
+    Sleep    0.5s
+    #Terrorist financing - Validation Methods
+    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Terrorist financing")]    #Terrorist financing tile
+    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Terrorist financing")]
+    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@value,"e2711741-1f0a-476b-a722-45c34bf12d7e")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@value,"e2711741-1f0a-476b-a722-45c34bf12d7e")]    #Suspicious Transaction Report - Validation IDs
+    Capture Page Screenshot    Terrorist financing selection.png
+    Sleep    0.5s
+    #Biometrics Validation - Validation Methods
+    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Biometrics Validation")]    #Biometrics Validation tile
+    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Biometrics Validation")]
+    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@name,"Voice recognition")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@name,"Voice recognition")]    #Voice recognition - Validation IDs
+    Capture Page Screenshot    Biometrics Validation selection.png
+    Sleep    0.5s
+    Comment    #Credit Bureau - Profile check - Validation Methods
+    Comment    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Credit Bureau - Profile check")]    #Credit Bureau - Profile check tile
+    Comment    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Credit Bureau - Profile check")]
+    Comment    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    Comment    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@name,"Credit Profile Single Source")]
+    Comment    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@name,"Credit Profile Single Source")]    #Credit Profile Single Source - Validation IDs
+    Comment    Capture Page Screenshot    Credit Bureau selection.png
+    Comment    Sleep    0.5s
+    #Income Validation - Validation Methods
+    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Income Validation")]    #Income Validation tile
+    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Income Validation")]
+    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@name,"Employment Letter")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@name,"Employment Letter")]    #Employment Letter - Validation IDs
+    Capture Page Screenshot    Income Verification selection.png
+    Sleep    0.5s
+    #Employment Verification - Validation Methods
+    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Employment Verification")]    #Employment Verification tile
+    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Employment Verification")]
+    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@name,"Bank Statement")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@name,"Bank Statement")]    #Bank Statement - Validation IDs
+    Capture Page Screenshot    Employment Verification selection.png
+    Sleep    0.5s
+    #Politically Exposed person - Validation Methods
+    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Politically Exposed person")]    #Politically Exposed person tile
+    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Politically Exposed person")]
+    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@name,"PEP Basic Profile (Current Jurisdiction)")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@name,"PEP Basic Profile (Current Jurisdiction)")]    #PEP Basic Profile (Current Jurisdiction) - Validation IDs
+    Capture Page Screenshot    Politically Exposed person selection.png
+    Sleep    0.5s
+    #Sanctions and Screening Validation - Validation Methods
+    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Sanctions and Screening Validation")]    #Sanctions and Screening Validation tile
+    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Sanctions and Screening Validation")]
+    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@name,"Sanctions Basic Check (Current Jurisdiction)")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@name,"Sanctions Basic Check (Current Jurisdiction)")]    #Sanctions Basic Check (Current Jurisdiction) - Validation IDs
+    Capture Page Screenshot    Sanctions and Screening Validation selection.png
+    Sleep    0.5s
+    Comment    #Address Data - Digital Asset Attributes
+    Comment    Click Element    //*[@id="panel1a-header"]/div[2]    #Down Arrow - Address Data
+    Comment    Click Element    //*[@id="panel1a-content"]/div/p/div/div/div/div/div/div[8]    #Postal Code checkbox
+    Comment    Capture Page Screenshot    Address Data - Digital Asset Attributes.png
+    #Location dynamics - Validation Methods
+    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Location dynamics")]    #Location dynamics tile
+    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Location dynamics")]
+    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@name,"Wifi scanning")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@name,"Wifi scanning")]    #Wifi scanning - Validation IDs
+    Capture Page Screenshot    Location dynamics selection.png
+    Sleep    0.5s
+    #Collective Intelligence - Validation Methods
+    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Collective Intelligence")]    #Collective Intelligence tile
+    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Collective Intelligence")]
+    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@name,"Email, Phone & IP combination")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@name,"Email, Phone & IP combination")]    #Email, Phone & IP combination - Validation IDs
+    Capture Page Screenshot    Collective Intelligence selection.png
+    Sleep    0.5s
+    #Email Verification - Validation Methods
+    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Email Verification")]    #Email Verification tile
+    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Email Verification")]
+    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@name,"Email Address")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@name,"Email Address")]    #Email Address - Validation IDs
+    Capture Page Screenshot    Email Verification selection.png
+    Sleep    0.5s
+    #Phone Verification - Validation Methods
+    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Phone Verification")]    #Phone Verification tile
+    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Phone Verification")]
+    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@name,"Phone Number - Basic Check")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@name,"Phone Number - Basic Check")]    #Phone Number - Basic Check - Validation IDs
+    Capture Page Screenshot    Phone Verification selection.png
+    Sleep    0.5s
+    #Device IP Verification - Validation Methods
+    ${status}    Run Keyword And Return Status    Click Element    //*[contains(@name,"Device IP Verification")]    #Device IP Verification tile
+    ${Val_Methods_tilename}    Get Text    //*[contains(@name,"Device IP Verification")]
+    Run Keyword If    "${status}" == "False"    Append To List    @{non-clickable_Val_Methods_tiles}    ${Val_Methods_tilename}
+    ${status}    Run Keyword And Return Status    Checkbox Should Not Be Selected    //*[contains(@name,"IP Address")]
+    Run Keyword If    "${status}" == "True"    Click Element    //*[contains(@name,"IP Address")]    #IP Address - Validation IDs
+    Capture Page Screenshot    Device IP Verification selection.png
+    Sleep    0.5s
+    Log List    ${non-clickable_Val_Methods_tiles}
+    Click Next button
+    Comment    ${identityvalidationmethod_icon_value}    Get Text    //*[@id="root"]/div/div/div[2]/div/div/div[3]/div/div[1]/div/div/div[4]/button/span[1]/span[2]/span/small/button/span[1]/span
+    Comment    Run Keyword If    "${identityvalidationmethod_icon_value}" == "check_circle"    Log    IDENTITY VALIDATION METHOD ICON IS ${identityvalidationmethod_icon_value}.
+    Comment    Run Keyword If    "${identityvalidationmethod_icon_value}" != "check_circle"    Fail    IDENTITY VALIDATION METHOD ICON IS ${identityvalidationmethod_icon_value}.
+
+Input Industry Selection dropdown
+    Wait Until Page Contains Element    //*[@id="mui-component-select-industry"]    #Industry dropdown menu
+    Click Element    //*[@id="mui-component-select-industry"]    #Industry dropdown menu
+    Wait Until Page Contains Element    //*[contains(@data-value,"d3a1e224-c193-40e1-8a0d-7d53661537bb")]
+    Click Element    //*[contains(@data-value,"d3a1e224-c193-40e1-8a0d-7d53661537bb")]    #Industry dropdown menu; Selection made
+    Capture Page Screenshot    Industry Selection.png
+    Comment    ${industry_icon_value}    Get Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[3]/div/div[1]/div/div/div[1]/button/span[1]/span[2]/span/small/button/span[1]/span
+    Comment    Run Keyword If    "${industry_icon_value}" == "description"    Log    INDUSTRY BEFORE ICON IS ${industry_icon_value}.
+    Comment    Run Keyword If    "${industry_icon_value}" != "description"    Fail    INDUSTRY BEFORE ICON IS ${industry_icon_value}.
+    ${status}    Run Keyword And Return Status    Page Should Not Contain    This API Key name is already taken. Please use a different one.
+    Run Keyword If    "${status}" == "False"    Input API Name textbox
+    Click Next button
+    Comment    ${industry_icon_value}    Get Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[3]/div/div[1]/div/div/div[1]/button/span[1]/span[2]/span/small/button/span[1]/span
+    Comment    Run Keyword If    "${industry_icon_value}" == "check_circle"    Log    INDUSTRY BEFORE ICON IS ${industry_icon_value}.
+    Comment    Run Keyword If    "${industry_icon_value}" != "check_circle"    Fail    INDUSTRY BEFORE ICON IS ${industry_icon_value}.
+    [Teardown]
+
+Input Pricing Review Selection
+    Wait Until Page Contains Element    //*[contains(@name,"callVolume")]    #Estimated annual call volume textbox
+    Click Element    //*[contains(@name,"callVolume")]    #Estimated annual call volume textbox
+    Press Keys    //*[contains(@name,"callVolume")]    CTRL+A
+    Press Keys    //*[contains(@name,"callVolume")]    DELETE
+    Comment    Clear Element Text    //*[contains(@name,"callVolume")]    #Estimated annual call volume textbox
+    Input Text    //*[contains(@name,"callVolume")]    100000    #Estimated annual call volume textbox
+    Click Element    //*[@id="mui-component-select-cost_center"]    #Select cost center dropdown
+    Click Element    //*[@id="menu-cost_center"]/div[3]/ul/li[2]    #Select cost center dropdown - Dummy Cost Center option
+    Click Element    //*[@id="mui-component-select-project"]    #Select project dropdown
+    Click Element    //*[@id="menu-project"]/div[3]/ul/li[2]    #Select project dropdown - Test Project 3 option
+    Capture Page Screenshot    Pricing Review Selection.png
+    Comment    ${pricingreview_icon_value}    Get Text    //*[@id="root"]/div/div/div[2]/div/div/div[3]/div/div[1]/div/div/div[7]/button/span[1]/span[2]/span/small/button/span[1]/span
+    Comment    Run Keyword If    "${pricingreview_icon_value}" == "description"    Log    PRICING REVIEW ICON IS ${pricingreview_icon_value}.
+    Comment    Run Keyword If    "${pricingreview_icon_value}" != "description"    Fail    PRICING REVIEW ICON IS ${pricingreview_icon_value}.
+    Click Approve button
+    Click Next button
+    Comment    ${pricingreview_icon_value}    Get Text    //*[@id="root"]/div/div/div[2]/div/div/div[3]/div/div[1]/div/div/div[7]/button/span[1]/span[2]/span/small/button/span[1]/span
+    Comment    Run Keyword If    "${pricingreview_icon_value}" == "check_circle"    Log    PRICING REVIEW ICON IS ${pricingreview_icon_value}.
+    Comment    Run Keyword If    "${pricingreview_icon_value}" != "check_circle"    Fail    PRICING REVIEW ICON IS ${pricingreview_icon_value}.
+
+Input Production API Selection
+    Comment    Click Element    //*[@id="mui-component-select-dataDesination"]    #Select Data Destination dropdown menu
+    Comment    Click Element    //*[contains(@data-value,"Data Destination 1")]    #Data Destination 1 option    #Options not available yet
+    Wait Until Page Contains Element    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[1]/div[2]/div[2]/div[3]/button[1]    #Generate API Key button
+    Click Button    Generate API key    #Generate API Key button
+    ${APItestingkey}    Get Text    //*[contains(@name,"testApiKey")]    #API Testing Key textbox
+    log    ${APItestingkey}
+    Input Text    //*[contains(@name,"endpoint")]    https://www.google.com    #Endpoint Name textbox
+    Click Element    //*[@id="mui-component-select-httpMethod"]
+    Wait Until Page Contains Element    //*[@id="menu-httpMethod"]/div[3]/ul/li[2]
+    Click Element    //*[@id="menu-httpMethod"]/div[3]/ul/li[2]
+    Comment    Select From List By Value    //*[@id="mui-component-select-httpMethod"]    GET    #HTTP Method dropdown menu
+    Input Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[1]/div[2]/div[2]/div[15]/div/div/div/input    name    #HTTP Headers textbox
+    Press Keys    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[1]/div[2]/div[2]/div[15]/div/div/div/input    ENTER    #HTTP Headers textbox
+    Input Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[1]/div[2]/div[2]/div[15]/div/div/div/input    address    #HTTP Headers textbox
+    Input Text    //*[contains(@name,"redirectUrl")]    https://www.yahoo.ca    #Redirect URL textbox
+    Input Text    //*[contains(@name,"purposeCode")]    for testing    #Purpose textbox
+    Select Radio Button    applicationRestriction    NR    #Application Restrictions (Optional) radio button
+    Capture Page Screenshot    Testing API Selection.png
+    Click Link    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[1]/div[3]/a    #IDVerifact Privacy Policy Link link
+    Sleep    1s
+    Capture Page Screenshot    Privacy Policy - IDVerifact.png
+    ${windowhandles}    Get Window Handles
+    Switch Window    ${windowhandles}[1]
+    Log Location
+    Close Window
+    Switch Window    ${windowhandles}[0]
+    Click Link    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[2]/div[2]/a    #Test API ${random_number}definition link
+    Sleep    1s
+    Capture Page Screenshot    Test API ${random_number}definition.png
+    ${windowhandles}    Get Window Handles
+    Switch Window    ${windowhandles}[1]
+    Log Location
+    Close Window
+    Switch Window    ${windowhandles}[0]
+    Click Link    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[2]/div[3]/a    #API Introduction link
+    Sleep    1s
+    Capture Page Screenshot    API Introduction.png
+    ${windowhandles}    Get Window Handles
+    Switch Window    ${windowhandles}[1]
+    Log Location
+    Close Window
+    Switch Window    ${windowhandles}[0]
+    Click Link    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[2]/div[4]/a    #Authentication Guide link
+    Sleep    1s
+    Capture Page Screenshot    Authentication Guide.png
+    ${windowhandles}    Get Window Handles
+    Switch Window    ${windowhandles}[1]
+    Log Location
+    Close Window
+    Switch Window    ${windowhandles}[0]
+    Comment    ${productionapi_icon_value}    Get Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[3]/div/div[1]/div/div/div[10]/button/span[1]/span[2]/span/small/button/span[1]/span
+    Comment    Run Keyword If    "${productionapi_icon_value}" == "description"    Log    PRODUCTION API ICON IS ${productionapi_icon_value}.
+    Comment    Run Keyword If    "${productionapi_icon_value}" != "description"    Fail    PRODUCTION API ICON IS ${productionapi_icon_value}.
+    Click Deploy button
+    Click Yes button
+
+Input Testing API Selection
+    Comment    ${testingapi_icon_value}    Get Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[3]/div/div[1]/div/div/div[8]/button/span[1]/span[2]/span/small/button/span[1]/span
+    Comment    Run Keyword If    "${testingapi_icon_value}" == "description"    Log    TESTING API ICON IS ${testingapi_icon_value}.
+    Comment    Run Keyword If    "${testingapi_icon_value}" != "description"    Fail    TESTING API ICON IS ${testingapi_icon_value}.
+    Wait Until Page Contains Element    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[1]/div[2]/div[2]/div[3]/button[1]    #Generate API Key button
+    Click Button    Generate API key    #Generate API Key button
+    ${APItestingkey}    Get Text    //*[contains(@name,"testApiKey")]    #API Testing Key textbox
+    log    ${APItestingkey}
+    Input Text    //*[contains(@name,"endpoint")]    https://www.google.com    #Endpoint Name textbox
+    Click Element    //*[@id="mui-component-select-httpMethod"]
+    Wait Until Page Contains Element    //*[@id="menu-httpMethod"]/div[3]/ul/li[2]
+    Click Element    //*[@id="menu-httpMethod"]/div[3]/ul/li[2]
+    Comment    Select From List By Value    //*[@id="mui-component-select-httpMethod"]    GET    #HTTP Method dropdown menu
+    Input Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[1]/div[2]/div[2]/div[15]/div/div/div/input    name    #HTTP Headers textbox
+    Press Keys    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[1]/div[2]/div[2]/div[15]/div/div/div/input    ENTER    #HTTP Headers textbox
+    Input Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[1]/div[2]/div[2]/div[15]/div/div/div/input    address    #HTTP Headers textbox
+    Input Text    //*[contains(@name,"redirectUrl")]    https://www.yahoo.ca    #Redirect URL textbox
+    Input Text    //*[contains(@name,"purposeCode")]    for testing    #Purpose textbox
+    Select Radio Button    applicationRestriction    NR    #Application Restrictions (Optional) radio button
+    Capture Page Screenshot    Testing API Selection.png
+    Click Link    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[1]/div[3]/a    #IDVerifact Privacy Policy Link link
+    Sleep    1s
+    Capture Page Screenshot    Privacy Policy - IDVerifact.png
+    ${windowhandles}    Get Window Handles
+    Switch Window    ${windowhandles}[1]
+    Log Location
+    Close Window
+    Switch Window    ${windowhandles}[0]
+    Sleep    1s
+    Click Link    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[2]/div[2]/a    #Test API ${random_number}definition link
+    Sleep    1s
+    Capture Page Screenshot    Test API ${random_number}definition.png
+    ${windowhandles}    Get Window Handles
+    Switch Window    ${windowhandles}[1]
+    Log Location
+    Close Window
+    Switch Window    ${windowhandles}[0]
+    Sleep    1s
+    Click Link    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[2]/div[3]/a    #API Introduction link
+    Sleep    1s
+    Capture Page Screenshot    API Introduction.png
+    ${windowhandles}    Get Window Handles
+    Switch Window    ${windowhandles}[1]
+    Log Location
+    Close Window
+    Switch Window    ${windowhandles}[0]
+    Sleep    1s
+    Click Link    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[2]/div[4]/a    #Authentication Guide link
+    Sleep    1s
+    Capture Page Screenshot    Authentication Guide.png
+    ${windowhandles}    Get Window Handles
+    Switch Window    ${windowhandles}[1]
+    Log Location
+    Close Window
+    Switch Window    ${windowhandles}[0]
+    Sleep    1s
+    Click Next button
+    Click Yes button
+    Comment    ${testingapi_icon_value}    Get Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[3]/div/div[1]/div/div/div[8]/button/span[1]/span[2]/span/small/button/span[1]/span
+    Comment    Run Keyword If    "${testingapi_icon_value}" == "check_circle"    Log    TESTING API ICON IS ${testingapi_icon_value}.
+    Comment    Run Keyword If    "${testingapi_icon_value}" != "check_circle"    Fail    TESTING API ICON IS ${testingapi_icon_value}.
+
+Input Testing Results Selection
+    Wait Until Page Contains Element    //*[contains(@name,"testing_cycle_name")]    #Test Cycle Name textbox
+    Input Text    testing_cycle_name    Execution 1_Passed    #Test Cycle Name textbox
+    Click Element    //*[@id="mui-component-select-test_outcome"]    #Testing Outcome dropdown menu
+    Click Element    //*[contains(@data-value,"PASS")]    #PASS option
+    Capture Page Screenshot    Testing Results Selection.png
+    Click Button    Add Test Result    #Add Test Result button
+    Capture Page Screenshot    Testing Results Selection.png
+    Comment    ${testingresults_icon_value}    Get Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[3]/div/div[1]/div/div/div[9]/button/span[1]/span[2]/span/small/button/span[1]/span
+    Comment    Run Keyword If    "${testingresults_icon_value}" == "description"    Log    TESTING RESULTS ICON IS ${testingresults_icon_value}.
+    Comment    Run Keyword If    "${testingresults_icon_value}" != "description"    Fail    TESTING RESULTS ICON IS ${testingresults_icon_value}.
+    Wait Until Page Contains Element    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[3]/div/div[2]/div/span[1]
+    ${executed_test_results_name}    Get Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[3]/div/div[2]/div/span[1]    #Executed Test Results Column #1
+    Should Be Equal As Strings    ${executed_test_results_name}    Execution 1_Passed
+    ${executed_test_end_date}    Get Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[3]/div/div[2]/div/span[2]    #Executed Test Results Column #2
+    Comment    ${test_cycle_end_date}    Get Text    //*[contains(@name,"test_end_date")]    #Test cycle end date dropdown menu
+    Comment    ${month_date}    Get Text    css=body > div.MuiDialog-root > div.MuiDialog-container.MuiDialog-scrollPaper > div > div.MuiDialogContent-root.MuiPickersModal-dialog > div > div.MuiToolbar-root.MuiToolbar-regular.MuiPickersToolbar-toolbar.MuiPickersDatePickerRoot-toolbar.MuiToolbar-gutters > button:nth-child(2) > span.MuiButton-label > h4
+    Comment    log    ${month_date}
+    Comment    ${year}    Get Text    css=body > div.MuiDialog-root > div.MuiDialog-container.MuiDialog-scrollPaper > div > div.MuiDialogContent-root.MuiPickersModal-dialog > div > div.MuiToolbar-root.MuiToolbar-regular.MuiPickersToolbar-toolbar.MuiPickersDatePickerRoot-toolbar.MuiToolbar-gutters > button:nth-child(1) > span.MuiButton-label > h6
+    Comment    log    ${year}
+    Comment    ${month_date}    Fetch From Right    ${month_date}    ,
+    Comment    ${test_cycle_end_date}    Catenate    ${month_date}    ,    \    ${year}
+    Comment    Should Be Equal As Strings    ${executed_test_end_date}    ${test_cycle_end_date}
+    ${executed_test_outcome}    Get Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[2]/div/div[2]/div[3]/div/div[2]/div/span[3]/div/span    #Executed Test Results Column #3
+    Should Be Equal As Strings    ${executed_test_outcome}    PASS
+    Click Next button
+    Comment    ${testingresults_icon_value}    Get Text    //*[@id="root"]/div/div[2]/div[2]/div/div/div[3]/div/div[1]/div/div/div[9]/button/span[1]/span[2]/span/small/button/span[1]/span
+    Comment    Run Keyword If    "${testingresults_icon_value}" == "check_circle"    Log    TESTING RESULTS ICON IS ${testingresults_icon_value}.
+    Comment    Run Keyword If    "${testingresults_icon_value}" != "check_circle"    Fail    TESTING RESULTS ICON IS ${testingresults_icon_value}.
+
+Input number of browsers to be tested with
+    @{browser_list_tobetested}    Create List
+    @{browser_list}    Create List    gc    ff    ie
+    ${browser_list_length}    Get Length    ${browser_list}    #Making the max list size variable
+    FOR    ${j}    IN RANGE    ${run_iteration}    #${number_of_browsers} is user provided as a scalar; number of browsers user wants to test in
+        ${random_number}    Evaluate    random.randint(0,${browser_list_length}-1)
+        ${browser_selection}    Get From List    ${browser_list}    ${random_number}
+        Append To List    ${browser_list_tobetested}    ${browser_selection}
+        Remove From List    ${browser_list}    ${random_number}    #removing based on the index
+        ${length_browser_list_tobetested}    Get Length    ${browser_list_tobetested}
+        Exit For Loop If    '${length_browser_list_tobetested}' == '${run_iteration}'
+    END
+    Log List    ${browser_list_tobetested}
+    Set Test Variable    ${browser_list_tobetested}
+
+Insert API Name textbox
+    [Arguments]    ${API Name}
+    Input Text    //*[contains(@name,"apiName")]    ${API Name}    #Name Textbox
+    Set Global Variable    ${API Name}
+
+Insert Application Restrictions radio button
+    [Arguments]    ${Application Restrictions}
+    Select Radio Button    restriction.type    ${Application Restrictions}    #Application Restrictions (Optional) Radio Buttons
+
+Insert Authentication Provider dropdown menu
+    [Arguments]    ${Authentication Provider Dropdown Menu}
+    Select from List by Value    //*[@id="provider"]    ${Authentication Provider Dropdown Menu}    #Authentication Provider Dropdown Menu
+
+Insert Data Destination Endpoint textbox
+    [Arguments]    ${Data Destination Endpoint}
+    Input Text    //*[@id="data-drop-url"]    ${Data Destination Endpoint}    #Data Destination Endpoint Textbox
+
+Insert Data Destination Headers textbox
+    Input Text    //*[contains(@name,'93data-drop-header-0-name'94)]    Header#1    #Data Destination Headers (Optional) Textbox
+    Input Text    //*[contains(@name,'93data-drop-header-0-value'94)]    Header#2    #Data Destination Headers (Optional) Textbox
+
+Insert Eye Modalities checkbox
+    ${status}    Run Keyword and Return Status    Checkbox Should Be Selected    css=#face    #BioConnect Modalities Checkbox - Face
+    Run Keyword If    ${status}    Click Element    css=#face
+    ${status}    Run Keyword and Return Status    Checkbox Should Be Selected    css=#voice    #BioConnect Modalities Checkbox - Voice
+    Run Keyword If    ${status}    Click Element    css=#voice
+    ${status}    Run Keyword and Return Status    Checkbox Should Not Be Selected    css=#eye    #BioConnect Modalities Checkbox - Eye
+    Run Keyword If    ${status}    Click Element    css=#eye
+    ${status}    Run Keyword and Return Status    Checkbox Should Be Selected    css=#fingerprint    #BioConnect Modalities Checkbox - Fingerprint
+    Run Keyword If    ${status}    Click Element    css=#fingerprint
+
+Insert Face Modalities checkbox
+    ${status}    Run Keyword and Return Status    Checkbox Should Not Be Selected    css=#face    #BioConnect Modalities Checkbox - Face
+    Run Keyword If    ${status}    Click Element    css=#face
+    ${status}    Run Keyword and Return Status    Checkbox Should Be Selected    css=#voice    #BioConnect Modalities Checkbox - Voice
+    Run Keyword If    ${status}    Click Element    css=#voice
+    ${status}    Run Keyword and Return Status    Checkbox Should Be Selected    css=#eye    #BioConnect Modalities Checkbox - Eye
+    Run Keyword If    ${status}    Click Element    css=#eye
+    ${status}    Run Keyword and Return Status    Checkbox Should Be Selected    css=#fingerprint    #BioConnect Modalities Checkbox - Fingerprint
+    Run Keyword If    ${status}    Click Element    css=#fingerprint
+
+Insert Face Voice Eye Fingerprint Modalities checkbox
+    ${status}    Run Keyword and Return Status    Checkbox Should Not Be Selected    css=#face    #BioConnect Modalities Checkbox - Face
+    Run Keyword If    ${status}    Click Element    css=#face
+    ${status}    Run Keyword and Return Status    Checkbox Should Not Be Selected    css=#voice    #BioConnect Modalities Checkbox - Voice
+    Run Keyword If    ${status}    Click Element    css=#voice
+    ${status}    Run Keyword and Return Status    Checkbox Should Not Be Selected    css=#eye    #BioConnect Modalities Checkbox - Eye
+    Run Keyword If    ${status}    Click Element    css=#eye
+    ${status}    Run Keyword and Return Status    Checkbox Should Not Be Selected    css=#fingerprint    #BioConnect Modalities Checkbox - Fingerprint
+    Run Keyword If    ${status}    Click Element    css=#fingerprint
+
+Insert Face Voice Modalities checkbox
+    ${status}    Run Keyword and Return Status    Checkbox Should Not Be Selected    css=#face    #BioConnect Modalities Checkbox - Face
+    Run Keyword If    ${status}    Click Element    css=#face
+    ${status}    Run Keyword and Return Status    Checkbox Should Not Be Selected    css=#voice    #BioConnect Modalities Checkbox - Voice
+    Run Keyword If    ${status}    Click Element    css=#voice
+    ${status}    Run Keyword and Return Status    Checkbox Should Be Selected    css=#eye    #BioConnect Modalities Checkbox - Eye
+    Run Keyword If    ${status}    Click Element    css=#eye
+    ${status}    Run Keyword and Return Status    Checkbox Should Be Selected    css=#fingerprint    #BioConnect Modalities Checkbox - Fingerprint
+    Run Keyword If    ${status}    Click Element    css=#fingerprint
+
+Insert Fingerprint Modalities checkbox
+    ${status}    Run Keyword and Return Status    Checkbox Should Be Selected    css=#face    #BioConnect Modalities Checkbox - Face
+    Run Keyword If    ${status}    Click Element    css=#face
+    ${status}    Run Keyword and Return Status    Checkbox Should Be Selected    css=#voice    #BioConnect Modalities Checkbox - Voice
+    Run Keyword If    ${status}    Click Element    css=#voice
+    ${status}    Run Keyword and Return Status    Checkbox Should Be Selected    css=#eye    #BioConnect Modalities Checkbox - Eye
+    Run Keyword If    ${status}    Click Element    css=#eye
+    ${status}    Run Keyword and Return Status    Checkbox Should Not Be Selected    css=#fingerprint    #BioConnect Modalities Checkbox - Fingerprint
+    Run Keyword If    ${status}    Click Element    css=#fingerprint
+
+Insert Identifier textbox
+    Clear Element Text    //*[@id="identifier"]
+    Input Text    //*[@id="identifier"]    ${identifier_value}
+
+Insert Number of BioConnect Modalities textbox
+    Press Keys    css=#provider-bio-connect-number-of-modalities    BACKSPACE
+    Input Text    css=#provider-bio-connect-number-of-modalities    1    #Number Of BioConnect Modalities Textbox
+
+Insert Random Modalities checkbox
+    @{modality_list}    Create List    face    voice    eye    fingerprint
+    @{chosen_modality_list}    Create List
+    FOR    ${i}    IN RANGE    0    ${modality_number}
+        log    ${i}
+        ${j}    Evaluate    random.choice($modality_list)    random
+        Append To List    ${chosen_modality_list}    ${j}
+        Remove Values From List    ${modality_list}    ${j}
+        ${chosen_modality_list_length}    Get Length    ${chosen_modality_list}
+        ${status}    Run Keyword And Return Status    Should Be Equal As Integers    ${chosen_modality_list_length}    ${modality_number}
+        Exit For Loop If    ${status}
+    END
+    Log List    ${chosen_modality_list}
+    Log List    ${modality_list}
+    ${chosen_modality_list_length}    Get Length    ${chosen_modality_list}
+    ${modality_list_length}    Get Length    ${modality_list}
+    FOR    ${k}    IN RANGE    0    ${chosen_modality_list_length}
+        ${status}    Run Keyword and Return Status    Checkbox Should Not Be Selected    css=#${chosen_modality_list}[${k}]    #BioConnect Modalities Checkbox - ${chosen_modality_list}[${k}]
+        Run Keyword If    ${status}    Select Checkbox    css=#${chosen_modality_list}[${k}]
+    END
+    FOR    ${l}    IN RANGE    0    ${modality_list_length}
+        ${status}    Run Keyword and Return Status    Checkbox Should Be Selected    css=#${modality_list}[${l}]    #BioConnect Modalities Checkbox - ${modality_list}[${l}]
+        Run Keyword If    ${status}    Click Element    css=#${modality_list}[${l}]
+    END
+
+Insert Redirect URL dropdown menu
+    [Arguments]    ${Redirect URL Dropdown Menu}
+    Select from List by Value    //*[@id="post-share-method"]    ${Redirect URL Dropdown Menu}    #Post Share Redirect URL Dropdown Menu
+    [Teardown]
+
+Insert Redirect URL textbox
+    [Arguments]    ${Redirect URL}
+    Input Text    //*[@id="post-share-url"]    ${Redirect URL}    #Post Share Redirect URL Textbox
+
+Insert Voice Modalities checkbox
+    ${status}    Run Keyword and Return Status    Checkbox Should Be Selected    css=#face    #BioConnect Modalities Checkbox - Face
+    Run Keyword If    ${status}    Click Element    css=#face
+    ${status}    Run Keyword and Return Status    Checkbox Should Not Be Selected    css=#voice    #BioConnect Modalities Checkbox - Voice
+    Run Keyword If    ${status}    Click Element    css=#voice
+    ${status}    Run Keyword and Return Status    Checkbox Should Be Selected    css=#eye    #BioConnect Modalities Checkbox - Eye
+    Run Keyword If    ${status}    Click Element    css=#eye
+    ${status}    Run Keyword and Return Status    Checkbox Should Be Selected    css=#fingerprint    #BioConnect Modalities Checkbox - Fingerprint
+    Run Keyword If    ${status}    Click Element    css=#fingerprint
+
+Launch API Key page
+    Open Browser    https://dev-id.prodigylabs.net/api-keys/list    gc
+    Maximize Browser Window
+    ${status}    Run Keyword And Return Status    Page Should Contain Element    //*[@id="root"]/div/div/div/div[2]/div/button
+    Run Keyword If    "${status}" == "True"    Sign In using Auth0
+    Switch Window    locator=MAIN
+
+Launch API Keys Dashboard page
+    Open Browser    ${env_url}    gc
+    Maximize Browser Window
+    Comment    ${status}    Run Keyword And Return Status    Page Should Contain Element    //*[@id="root"]/div/div/div/div[2]/div/button
+    Comment    Run Keyword If    "${status}" == "True"    Sign In using Auth0
+    Sign In using IDVerifact Login form
+    Comment    Sign In using Auth0    #Another Sign In option
+    ${URL_status}    Run Keyword And Return Status    Wait Until Location Contains    dashboard    2
+    Run Keyword If    "${URL_status}" == "False"    Click Element    //*[@id="root"]/div/div[1]/div/div[2]/div[1]/a[1]/button    #Dashboard Page
+    Capture Page Screenshot    Dashboard Landing Page.png
+
+Launch DAC
+    Open Browser    https://uat.id.prodigylabs.net/ui    gc
+    ${textarea_status}    Run Keyword And Return Status    Element Should Not Contain    //*[contains(@name,"X-API-Key")]    ${EMPTY}
+    ${button_status}    Run Keyword And Return Status    Page Should Contain Element    //*[@id="root"]/div/div[3]/div/div/div/form/button
+    Run Keyword If    '${textarea_status}' == 'True' and '${button_status}' == 'True'    Capture Page Screenshot    DAC page.png
+
+Launch Identity Client page
+    Open Browser    https://dev.id.prodigylabs.net/client/ui    gc
+
+Navigate through My Bank Review and Verify page
+    Comment    ${button_status}    Run Keyword And Return Status    Page Should Contain Element    //*[starts-with(@id,"dapbox_button")]
+    Comment    Run Keyword If    '${button_status}' == 'True'    Click Element    //*[starts-with(@id,"dapbox_button")]    #Any Add buttons
+    Comment    Press Keys    css=#license__button-agree > span    TAB
+    ${button_status}    Run Keyword And Return Status    Element Should Be Enabled    css=#license__button-agree > span
+    Run Keyword If    '${button_status}' == 'True'    Click Element    css=#license__button-agree > span    #I Agree button
+
+Navigate to Create a New API flow from API List pages
+    Click Element    //*[@id="root"]/div/div[2]/div[2]/div/div/div[1]/div[2]/button/span[1]    #In-Page New API Key button
+
+Navigate to the Digital Identity Solutions KYC Details page
+    Click Element    //*[@id="root"]/div/div[2]/div[2]/div/div/div[2]/div/div/div[3]/div/div/div[5]/div/a/img    #“>” symbol for the KYC row
+    Wait Until Location Contains    bad73081-2b6f-4804-9d74-618f33743607    #KYC UUID
+    Wait Until Element Contains    //*[@id="root"]/div/div[2]/div[2]/div/div/div[1]/div/span[3]    Know Your Customer    10s    #Breadcrumb
+    Capture Page Screenshot    Digital Identity Solutions Details - KYC page.png
+
+Paste the copied API Key value in API Name text box
+    Press Keys    //*[contains(@name,"apiName")]    SHIFT+INSERT
+
+Select Account Profile Parameters
+    ${number of parameters}    Evaluate    random.sample(range(1,7) , 1)    random    #Identity Profile - User Defined number of parameters
+    ${parameter ids}    Evaluate    random.sample(range(1,7) , ${number of parameters}[0])    random    #Identity Profile - Id’s of User Defined number of parameters
+    log    ${number of parameters}[0]
+    log    ${parameter ids}
+    FOR    ${i}    IN RANGE    0    ${number of parameters}[0]
+        log    ${i}
+        ${j}    Evaluate    random.choice(${parameter ids})    random
+        Click Element    css=#root > div > div.main-bar > div > div > div.api-key-form > form > div > div.col-xl-8.col-lg-7.col-md-6.col-sm-12.col-12 > div.provider-verified-me > div.provider-verified-me-bundle > div > div.assets.row > div:nth-child(2) > div > div.asset-fields.row > div:nth-child(${j}) > div > label
+        Remove Values From List    ${parameter ids}    ${j}
+        ${parameter ids_length}    Get Length    ${parameter ids}
+        ${status}    Run Keyword And Return Status    Should Be Equal As Integers    ${parameter ids_length}    0
+        Exit For Loop If    ${status}
+    END
+
+Select Identity Profile Parameters
+    ${number of parameters}    Evaluate    random.sample(range(1,9) , 1)    random    #Identity Profile - User Defined number of parameters
+    ${parameter ids}    Evaluate    random.sample(range(1,9) , ${number of parameters}[0])    random    #Identity Profile - Id’s of User Defined number of parameters
+    log    ${number of parameters}[0]
+    log    ${parameter ids}
+    FOR    ${i}    IN RANGE    0    ${number of parameters}[0]
+        log    ${i}
+        ${j}    Evaluate    random.choice(${parameter ids})    random
+        Click Element    css=#root > div > div.main-bar > div > div > div.api-key-form > form > div > div.col-xl-8.col-lg-7.col-md-6.col-sm-12.col-12 > div.provider-verified-me > div.provider-verified-me-bundle > div > div.assets.row > div:nth-child(1) > div > div.asset-fields.row > div:nth-child(${j}) > div > label
+        Remove Values From List    ${parameter ids}    ${j}
+        ${parameter ids_length}    Get Length    ${parameter ids}
+        ${status}    Run Keyword And Return Status    Should Be Equal As Integers    ${parameter ids_length}    0
+        Exit For Loop If    ${status}
+    END
+
+Select a filter option on the Dashboard page
+    [Arguments]    ${dashboard_filter_option}
+    Run Keywords    Wait Until Page Contains Element    //*[@id="root"]/div/div[2]/div[2]/div/div/div[1]/div[2]/div
+    ...    AND    Click Element    //*[@id="root"]/div/div[2]/div[2]/div/div/div[1]/div[2]/div    #Filter Dropdown Menu
+    Capture Page Screenshot    Dashboard page - All filter options displayed.png
+    Run Keyword If    "${dashboard_filter_option}" == "Today"    Click Element    //*[@id="menu-"]/div[3]/ul/li[1]    #Today Filter option
+    Run Keyword If    "${dashboard_filter_option}" == "Week"    Click Element    //*[@id="menu-"]/div[3]/ul/li[2]    #Last Week Filter option
+    Run Keyword If    "${dashboard_filter_option}" == "Month"    Click Element    //*[@id="menu-"]/div[3]/ul/li[3]    #Last Month Filter option
+    Run Keyword If    "${dashboard_filter_option}" == "Year"    Click Element    //*[@id="menu-"]/div[3]/ul/li[4]    #Last Year Filter option
+    Capture Page Screenshot    Dashboard page - Filter option selected.png
+
+Set Test Case Screenshots Folder
+    ${testcase_folder_var}    Get Current Date    exclude_millis=True
+    ${testcase_folder_var}    Remove String    ${testcase_folder_var}    -
+    ${testcase_folder_var}    Remove String    ${testcase_folder_var}    :
+    ${testcase_folder_var}    Remove String    ${testcase_folder_var}
+    Set Screenshot Directory    /Users/Ankur_Joshi/Documents/RobotFramework Screenshots/API Create Flow Test Suite${testsuite_folder_var}/TestRun${testcase_folder_var}
+
+Set Test Suite Screenshots Folder
+    ${testsuite_folder_var}    Get Current Date    exclude_millis=True
+    ${testsuite_folder_var}    Remove String    ${testsuite_folder_var}    -
+    ${testsuite_folder_var}    Remove String    ${testsuite_folder_var}    :
+    ${testsuite_folder_var}    Remove String    ${testsuite_folder_var}
+    Set Screenshot Directory    /Users/Ankur_Joshi/Documents/RobotFramework Screenshots/API Create Flow Test Suite${testsuite_folder_var}
+    Set Suite Variable    ${testsuite_folder_var}
+
+Sign In using Auth0
+    Sleep    1s
+    Click Button    Sign In With Auth0
+    Wait Until Page Contains Element    //*[@id="username"]
+    Capture Page Screenshot    Sign In page.png
+    Comment    Click Element    css=body > div > main > section > div > div.cb28a0bfd > div > div.c9c60e216.c7ac6bbdf > form.c7c90bd82.ca89abdcb.cfa1e67e7 > button
+    Comment    Capture Page Screenshot    Sign In with Google page.png
+    Comment    Comment    Click Element    //*[contains(@data_identifier,"ankur.joshi@prodigylabs.net")]
+    Comment    Input Text    //*[@id="identifierId"]    ankur.joshi@prodigylabs.net    #Username textbox
+    Comment    Capture Page Screenshot    Enter Username.png
+    Comment    Click Button    Next    #Next button
+    Comment    Capture Page Screenshot    Enter Password.png
+    Comment    Sleep    2
+    Comment    Input Text    css=#password > div.aCsJod.oJeWuf > div > div.Xb9hP > input    Gujarat666    #Password textbox
+    Comment    Capture Page Screenshot    Enter Password.png
+    Comment    Click Button    Next    #Next button
+    Comment    Wait Until Page Contains    2-step Verification
+    Comment    Click Element    //*[@id="view_container"]/div/div/div[2]/div/div[2]/div/div[2]/div/div/button/span
+    Comment    Switch Window    locator=NEW    #Log In pop-up window
+    Comment    Capture Page Screenshot    Sign In Auth0 page.png
+    Input Text    //*[@id="username"]    ankur.joshi@prodigylabs.net    #Username textbox
+    Input Password    //*[@id="password"]    LyibWyz@8    #Password textbox
+    Click Button    Continue    #Sign In button
+    Page Should Contain    Menu
+    Click Link    Sign In
+    Capture Page Screenshot    Placeholder Sign In page.png
+    Input Text    //*[@id="id_login"]    ankur.joshi@prodigylabs.net    #Username textbox
+    Input Password    //*[@id="id_password"]    LyibWyz@8    #Password textbox
+    Click Element    //*[@id="id_remember"]
+    Click Button    Sign In
+
+Sign In using Auth0 Google Integration
+    Click Element    //*[@id="root"]/div/div/div/div[2]/div/button
+    Switch Window    locator=NEW    #Log In pop-up window
+    Capture Page Screenshot    Sign In Auth0 page.png
+    Click Element    css=body > div > main > section > div > div.c1e2248de > div > div.c70284045.c11cdc327 > form.cdea54d0e.cc2f2fca9.cf12a87a8 > button    #Google Integration button
+    Input Text    //*[@id="identifierId"]    ankur.joshi@prodigylabs.net    #Email ID textbox
+    Capture Page Screenshot    Sign In Username Id page.png
+    Click Element    css=#identifierNext > div > button > div.VfPpkd-RLmnJb
+    Wait Until Page Contains Element    css=#password > div.aCsJod.oJeWuf > div > div.Xb9hP > input    10
+    Sleep    2s
+    Input Password    css=#password > div.aCsJod.oJeWuf > div > div.Xb9hP > input    Gujarat666
+    Capture Page Screenshot    Sign In Password page.png
+    Click Element    css=#passwordNext > div > button > div.VfPpkd-RLmnJb
+    #Verify if the User is on API Key Create page
+    #${status}    Run Keyword and Return Status    Page Should Contain    API Key Create
+    #Run Keyword If    ${status}    Capture Page Screenshot    API Key Create page - Unfilled.png
+
+Sign In using IDVerifact Login form
+    Wait Until Page Contains Element    //*[contains(@type,"email")]
+    Input Text    //*[contains(@type,"email")]    ankur.joshi@prodigylabs.net    #Username textbox
+    Input Password    //*[contains(@type,"password")]    LyibWyz@8    #Password textbox
+    Click Button    Login    #Sign In button
+
+Verify if the API Key has been Masked
+    Run Keyword If    "${masked_status}" == "True" and "${unmasked_status}" == "True"    Run Keywords    Log    API KEY IS HIDDEN.
+    ...    AND    FAIL    TEST IS UNSUCCESSFUL AS VIEW API KEY BUTTON IS UNRESPONSIVE.
+    Run Keyword If    "${unmasked_status}" == "True" and "${masked_status}" == "False"    Log    API KEY IS VISIBLE. TEST IS SUCCESSFUL.
+    Run Keyword If    "${masked_status}" == "True" and "${unmasked_status}" == "False"    Log    API KEY IS HIDDEN. TEST IS SUCCESSFUL.
+    Run Keyword If    "${unmasked_status}" == "False" and "${masked_status}" == "False"    Run Keywords    Log    API KEY IS VISIBLE.
+    ...    AND    FAIL    TEST IS UNSUCCESSFUL AS VIEW API KEY BUTTON IS UNRESPONSIVE.
+
+Verify if the API Key has been Unmasked
+    Run Keyword If    "${unmasked_status}" == "True" and "${masked_status}" == "True"    Run Keywords    Log    API KEY IS HIDDEN.
+    ...    AND    FAIL    TEST IS UNSUCCESSFUL AS VIEW API KEY BUTTON IS UNRESPONSIVE.
+    Run Keyword If    "${masked_status}" == "True" and "${unmasked_status}" == "False"    Log    API KEY IS VISIBLE. TEST IS SUCCESSFUL.
+    Run Keyword If    "${unmasked_status}" == "True" and "${masked_status}" == "False"    Log    API KEY IS HIDDEN. TEST IS SUCCESSFUL.
+    Run Keyword If    "${masked_status}" == "False" and "${unmasked_status}" == "False"    Run Keywords    Log    API KEY IS VISIBLE.
+    ...    AND    FAIL    TEST IS UNSUCCESSFUL AS VIEW API KEY BUTTON IS UNRESPONSIVE.
+
+Verify if the API Key is Masked
+    Get API Key value from API Keys List
+    Comment    ${APIKey}    Get Text    css=#MUIDataTableBodyRow-0 > td:nth-child(7)
+    ${masked_status}    Run Keyword And Return Status    Should Contain    ${APIKey}    ******************
+    Run Keyword If    "${masked_status}" == "True"    Log    API KEY IS HIDDEN.
+    Run Keyword If    "${masked_status}" == "False"    Log    API KEY IS VISIBLE.
+    Set Test Variable    ${masked_status}
+
+Verify if the API Key is Unmasked
+    Get API Key value from API Keys List
+    ${unmasked_status}    Run Keyword And Return Status    Should Be Equal As Strings    ${APIKey}    ******************
+    Set Test Variable    ${unmasked_status}
+    Run Keyword If    "${unmasked_status}" == "True"    Log    API KEY IS HIDDEN.
+    Run Keyword If    "${unmasked_status}" == "False"    Log    API KEY IS VISIBLE.
+    Verify if the API Key has been Unmasked
+
+Verify if the User is on API Keys page
+    ${current_URL}    Get Location
+    Set Global Variable    ${current_URL}    #To compare later to understand if Edit button will be present or not
+    ${URL_status}    Run Keyword And Return Status    Wait Until Location Contains    list    2
+    Run Keyword If    "${URL_status}" == "False"    Click Element    //*[@id="root"]/div/div[1]/div/div[2]/div[1]/a[3]/button    #Digital Identity APIs LHN Menu link
+    ${message_status}    Run Keyword And Return Status    Wait Until Page Contains    //*[@id="MUIDataTableBodyRow-0"]/td[2]    3
+    ${table_status}    Run Keyword If    "${message_status}" == "true"    Wait Until Page Contains Element    Sorry, no matching records found    3
+    Pass Execution If    '${table_status}' == 'True' and '${message_status}' == 'False'    NO DIGITAL IDENTITY APIs WERE FOUND ON THE PAGE THUS THE TEST CASE IS PASSED FOR NOW AND WILL BE RE-EXCUTED LATER.
+    Comment    Wait Until Page Contains Element    //*[@id="MUIDataTableBodyRow-0"]/td[2]
+    ${status}    Run Keyword and Return Status    Page Should Contain    Api Keys
+    Run Keyword If    ${status}    Capture Page Screenshot    API Keys page.png
+    Set Global Variable    ${status}
+
+Verify if the User is on Bank Selection page
+    ${status}    Run Keyword And Return Status    Wait Until Page Contains Element    css=#c-fi-selector-item__logo-MyBank    #My Bank image
+    Run Keyword If    '${status}' == 'True'    Capture Page Screenshot    Bank Selection.png
+
+Verify if the User is on Create API Keys page
+    ${status}    Run Keyword And Return Status    Wait Until Page Contains Element    css=#root > div > div > div.flex-grow.flex-column.relative.h-full.scroll-y > div > div > div.mb-sm-30 > div > nav > ol > li:nth-child(1) > a > span
+    Run Keyword If    "${status}" == "False"    Click Element    //*[@id="root"]/div/div[1]/div/div[2]/div[1]/a[4]/button
+    Wait Until Element Is Visible    css=#root > div > div > div.flex-grow.flex-column.relative.h-full.scroll-y > div > div > div.mb-sm-30 > div > nav > ol > li:nth-child(1) > a > span
+    Capture Page Screenshot    API Keys Create page.png
+
+Verify if the User is on Digital Identity Solutions page
+    ${URL_status}    Run Keyword And Return Status    Wait Until Location Contains    list    2
+    Run Keyword If    "${URL_status}" == "False"    Click Element    //*[@id="root"]/div/div[1]/div/div[2]/div[1]/a[2]/button    #Digital Identity Solutions LHN Menu link
+    ${status}    Run Keyword And Return Status    Wait Until Page Contains    Business Process    3
+    Capture Page Screenshot    Digital Identity Solutions - By Identity Solutions page.png
+
+Verify if the User is on In Progress API Keys page
+    Sleep    2s
+    ${current_URL}    Get Location
+    Set Global Variable    ${current_URL}    #To compare later to understand if Edit button will be present or not
+    ${URL_status}    Run Keyword And Return Status    Wait Until Location Contains    list    2
+    Run Keyword If    "${URL_status}" == "False"    Click Element    //*[@id="root"]/div/div[1]/div/div[2]/div[1]/a[5]/button    #In Progress APIs LHN Menu link
+    ${message_status}    Run Keyword And Return Status    Wait Until Page Contains    //*[@id="MUIDataTableBodyRow-0"]/td[2]    3
+    ${table_status}    Run Keyword If    "${message_status}" == "true"    Wait Until Page Contains Element    Sorry, no matching records found    3
+    Pass Execution If    '${table_status}' == 'True' and '${message_status}' == 'False'    NO DIGITAL IDENTITY APIs WERE FOUND ON THE PAGE THUS THE TEST CASE IS PASSED FOR NOW AND WILL BE RE-EXCUTED LATER.
+    ${status}    Run Keyword and Return Status    Page Should Contain    In Progress Api Keys
+    Run Keyword If    ${status}    Capture Page Screenshot    In Progress API Keys page.png
+    Set Global Variable    ${status}
+
+Verify if the User is on My Bank Delivered page
+    ${status}    Run Keyword And Return Status    Wait Until Page Contains    Delivered    30
+    Run Keyword If    '${status}' == 'True'    Capture Page Screenshot    My Bank Delivered page.png
+
+Verify if the User is on My Bank Identity Profile page
+    ${status}    Run Keyword And Return Status    Page Should Contain    Identity Profile
+    Run Keyword If    '${status}' == 'True'    Capture Page Screenshot    My Bank Identity Profile page.png
+
+Verify if the User is on My Bank Login page
+    ${status}    Run Keyword And Return Status    Wait Until Page Contains Element    //*[contains(@alt,"My Bank")]
+    Run Keyword If    '${status}' == 'True'    Capture Page Screenshot    My Bank Login page.png
+
+Verify if the User is on My Bank Review and Verify page
+    ${status}    Run Keyword And Return Status    Wait Until Page Contains    Please review and verify the following requested by Prodigy Labs    30
+    Run Keyword If    '${status}' == 'True'    Capture Page Screenshot    My Bank Review & Verify page.png
+
+Verify if the User is on My Bank T&Cs page
+    ${status}    Run Keyword And Return Status    Wait Until Page Contains    Terms and Conditions & Privacy Notice    30
+    Run Keyword If    '${status}' == 'True'    Capture Page Screenshot    My Bank T&Cs.png
+    Run Keyword If    '${status}' == 'True'    Click I Agree button
+
+Verify if the User is on My Bank Verification Code page
+    ${status}    Run Keyword And Return Status    Wait Until Page Contains Element    //*[@id="code"]
+    Run Keyword If    '${status}' == 'True'    Capture Page Screenshot    My Bank Verification Code page.png
+
+Verify if the User is redirected to API Keys page from Create API Keys page
+    Wait Until Location Is    https://uat-id.prodigylabs.net/api-keys/list
+    Sleep    1s
+    Change the number of API Keys displayed    50
+    Wait Until Page Contains    Test API ${random_number}    5
+    ${APIKey_xpath}    Get Element Attribute    //*[contains(text(),'Test API ${random_number}')]    attribute
+
+Verify if the page contains API Name
+    Run Keyword If    ${status}    Page Should Contain    ${API Name}
+
+Verify the Identity Data Capture tiles - No Common Use Case selection
+    Page Should Contain    Anti Money Laundering
+    Page Should Contain    Fraud Check
+    Page Should Contain    Know Your customer
+    Page Should Contain    Know your business
+    Page Should Contain    Credit Automation
+    Page Should Contain    Biometrics
+
+Verify the Identity Data Capture tiles - Retail Deposit Account Origination Use Case selection
+    Page Should Contain    Anti Money Laundering
+    Page Should Contain    Fraud Check
+    Page Should Contain    Know Your customer
+    Page Should Not Contain    Know your business
+    Page Should Not Contain    Credit Automation
+    Page Should Not Contain    Biometrics
